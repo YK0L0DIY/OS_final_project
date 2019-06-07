@@ -56,17 +56,58 @@ struct processo *novoProcesso(int instante, int codigo[N_MAXIMO_DE_INSTRUCOES * 
     return processo;
 }
 
-int obterPosicao(struct processo processo) {
+int obterPosicao(struct processo *processo) {
 
     if (FIT) {          //bestfit
 
     } else {            // nextfit
 
+    	int inicio, 
+    		fim,
+    		espaco = processo->maxPc + 10;
+
+    	//Search for a space that is greater or equal to the space needed.
+    	for (int x = apontadorDaUltimaAlocacao; i < MAX_MEMORIA; x++) {
+
+    		//Só prossegue quando encontrar pelo menos um espaço livre. 
+    		if (memoria[x] != -1) {
+    			continue;
+    		
+    		} else {
+
+    			inicio = x;		//Quando encontrar um espaço livre guarda-o.
+
+    			while (x < MAX_MEMORIA && memoria[x] == -1) {
+    				fim = x++;	//Vai atualizando o ultimo espaço livre encontrado.
+    			}
+
+    			//Calcula o tamanho do espaço encontrado e verifica se o processo cabe, se couber retorna a posição para onde pode começar a copiar.
+    			if ((fim - inicio) >= espaco) {
+    				return inicio;
+    			}
+
+    			//Caso não tenha encontrado do ultimo apontador até ao fim, vê do inicio ao ultimo apontador.
+    			for (int y = 0; y < apontadorDaUltimaAlocacao; y++) {
+
+    				inicio = y;
+
+    				while (y < MAX_MEMORIA && memoria[y] == -1)  {
+    					fim = y++;
+    				}
+
+    				if ((fim - inicio) >= espaco) {
+    					return inicio;
+    				}
+    			}
+    		}
+
+    	}
     }
-    //TODO implemnetar
+
+    return -1; // Não existe posição onde se pode meter o processo, seja BEST ou NEXTFIT.
 }
 
-void copiarParaMemoria(struct processo processo, int posicao) {
+void copiarParaMemoria(struct processo *processo, int posicao) {
     //TODO implementar
 }
 
