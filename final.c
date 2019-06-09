@@ -137,6 +137,8 @@ int obterPosicao(struct processo *processo) {
 }
 
 void copiarParaMemoria(struct processo *processo, int posicao) {
+
+	processo->posicaoInicial = posicao;
     
     //Espaco para variaveis meteido a 0.
     //printf("\npos: %d",posicao);
@@ -151,6 +153,9 @@ void copiarParaMemoria(struct processo *processo, int posicao) {
     	memoria[posicao] = processo->codigo[i];
     	posicao++;
     }
+
+    processo->posicaoFinal = posicao - 1;
+    apontadorDaUltimaAlocacao = posicao;
 }
 
 void limparExit(int *processo_em_exit, int *n_processos_corridos, struct processo *processos[]) {
@@ -413,8 +418,8 @@ int main(void) {
             switch (inst) {
                 case 0:                                                 // x1=x2
                     printf("executar case 0\n");
-                    pmemoria = pInicial + arg1;
-                    pmemoria2 = pInicial + arg2;
+                    pmemoria = pInicial + arg1 - 1;
+                    pmemoria2 = pInicial + arg2 - 1;
                     memoria[pmemoria] = memoria[pmemoria2];
 //                    printf("memoria p: %d %d \n", pmemoria, pmemoria2);
                     processos[processo_em_run]->pcb->pc++;
@@ -422,7 +427,7 @@ int main(void) {
 
                 case 1:                                                 // x=n
                     printf("executar case 1\n");
-                    pmemoria = pInicial + arg1;
+                    pmemoria = pInicial + arg1 - 1;
                     memoria[pmemoria] = arg2;
 //                    printf("memoria p: %d \n", pmemoria);
                     processos[processo_em_run]->pcb->pc++;
@@ -430,7 +435,7 @@ int main(void) {
 
                 case 2:                                                 // x=x+1
                     printf("executar case 2\n");
-                    pmemoria = pInicial + arg1;
+                    pmemoria = pInicial + arg1 - 1;
                     memoria[pmemoria] += 1;
 //                    printf("memoria p: %d \n", pmemoria);
                     processos[processo_em_run]->pcb->pc++;
@@ -438,7 +443,7 @@ int main(void) {
 
                 case 3:                                                 // x=x-1
                     printf("executar case 3\n");
-                    pmemoria = pInicial + arg1;
+                    pmemoria = pInicial + arg1 - 1;
                     memoria[pmemoria] -= 1;
 //                    printf("memoria p: %d \n", pmemoria);
                     processos[processo_em_run]->pcb->pc++;
@@ -488,18 +493,19 @@ int main(void) {
                         int posicao = obterPosicao(processos[p_id]);
                         if (posicao != -1) {
                             copiarParaMemoria(processos[p_id], posicao);
-                            memoria[processos[p_id]->posicaoInicial + arg1] = 0;
-                            memoria[processos[processo_em_run]->posicaoInicial + arg1] = processos[processo_em_run]->pcb->id;
+                            memoria[processos[p_id]->posicaoInicial + arg1 - 1] = 0;
+                            memoria[processos[processo_em_run]->posicaoInicial + arg1 -
+                                    1] = processos[processo_em_run]->pcb->id;
                             p_id++;
                         } else {
                             falhaFork = 1;
-                            memoria[processos[processo_em_run]->posicaoInicial + arg1] = -1;
+                            memoria[processos[processo_em_run]->posicaoInicial + arg1 - 1] = -1;
                             processos[processo_em_run]->pcb->pc++;
                         }
 
                     } else {
                         falhaFork = 1;
-                        memoria[processos[processo_em_run]->posicaoInicial + arg1] = -1;
+                        memoria[processos[processo_em_run]->posicaoInicial + arg1 - 1] = -1;
                         processos[processo_em_run]->pcb->pc++;
                     }
                     break;
