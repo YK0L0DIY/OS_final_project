@@ -7,7 +7,7 @@
 #define N_MAXIMO_DE_PROCESSOS 30
 #define MAX_MEMORIA 300
 #define QUANTUM 4
-#define FIT 1               // 1 -> bestfit | 0 -> nexfit
+#define FIT 0               // 1 -> bestfit | 0 -> nexfit
 
 int disk;
 int memoria[MAX_MEMORIA];
@@ -67,7 +67,7 @@ int obterPosicao(struct processo *processo) {
     		espaco = processo->maxPc + 10;
 
     	//Search for a space that is greater or equal to the space needed.
-    	for (int x = apontadorDaUltimaAlocacao; i < MAX_MEMORIA; x++) {
+    	for (int x = apontadorDaUltimaAlocacao; x < MAX_MEMORIA; x++) {
 
     		//Só prossegue quando encontrar pelo menos um espaço livre. 
     		if (memoria[x] != -1) {
