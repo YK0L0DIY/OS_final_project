@@ -7,7 +7,7 @@
 #define N_MAXIMO_DE_PROCESSOS 30
 #define MAX_MEMORIA 300
 #define QUANTUM 4
-#define FIT 0               // 1 -> bestfit | 0 -> nexfit
+#define FIT 1               // 1 -> bestfit | 0 -> nexfit
 
 int disk;
 int memoria[MAX_MEMORIA];
@@ -58,13 +58,42 @@ struct processo *novoProcesso(int instante, int codigo[N_MAXIMO_DE_INSTRUCOES * 
 
 int obterPosicao(struct processo *processo) {
 
-    if (FIT) {          //bestfit
+	int inicio,
+		novoInicio,
+		fim,
+		espacoDisponivel = MAX_MEMORIA + 1,
+		espacoNecessario = processo->maxPc * 3 + 10;
+
+    if (FIT == 1) {          //bestfit
+
+    	for (int x = 0; x < MAX_MEMORIA; x++) {
+
+    		//Só prossegue quando encontrar pelo menos um espaço livre. 
+    		if (memoria[x] != -1) {
+    			continue;
+    		
+    		} else {
+
+    			novoInicio = x;		//Quando encontrar um espaço livre guarda-o.
+
+    			while (x < MAX_MEMORIA && memoria[x] == -1) {
+    				fim = x;	//Vai atualizando o ultimo espaço livre encontrado.
+    				x++;
+    			}
+
+    			int diferenca = fim - novoInicio;
+
+    			//Calcula o tamanho do espaço encontrado e verifica se o processo cabe, se couber retorna a posição para onde pode começar a copiar.
+    			if (diferenca < espacoDisponivel && diferenca >= espacoNecessario) {
+    				espacoDisponivel = diferenca;
+    				inicio = novoInicio;
+    			}
+    		}
+
+    	}
+    	return inicio;
 
     } else {            // nextfit
-
-    	int inicio, 
-    		fim,
-    		espaco = processo->maxPc + 10;
 
     	//Search for a space that is greater or equal to the space needed.
     	for (int x = apontadorDaUltimaAlocacao; x < MAX_MEMORIA; x++) {
@@ -78,37 +107,50 @@ int obterPosicao(struct processo *processo) {
     			inicio = x;		//Quando encontrar um espaço livre guarda-o.
 
     			while (x < MAX_MEMORIA && memoria[x] == -1) {
-    				fim = x++;	//Vai atualizando o ultimo espaço livre encontrado.
+    				fim = x;	//Vai atualizando o ultimo espaço livre encontrado.
+    				x++;
     			}
 
     			//Calcula o tamanho do espaço encontrado e verifica se o processo cabe, se couber retorna a posição para onde pode começar a copiar.
-    			if ((fim - inicio) >= espaco) {
+    			if ((fim - inicio) >= espacoNecessario) {
     				return inicio;
-    			}
-
-    			//Caso não tenha encontrado do ultimo apontador até ao fim, vê do inicio ao ultimo apontador.
-    			for (int y = 0; y < apontadorDaUltimaAlocacao; y++) {
-
-    				inicio = y;
-
-    				while (y < MAX_MEMORIA && memoria[y] == -1)  {
-    					fim = y++;
-    				}
-
-    				if ((fim - inicio) >= espaco) {
-    					return inicio;
-    				}
     			}
     		}
 
     	}
+    	//Caso não tenha encontrado do ultimo apontador até ao fim, vê do inicio ao ultimo apontador.
+		for (int y = 0; y < apontadorDaUltimaAlocacao; y++) {
+
+			inicio = y;
+
+			while (y < apontadorDaUltimaAlocacao && memoria[y] == -1)  {
+				fim = y++;
+			}
+
+			if ((fim - inicio) >= espacoNecessario) {
+				return inicio;
+			}
+		}
     }
 
     return -1; // Não existe posição onde se pode meter o processo, seja BEST ou NEXTFIT.
 }
 
 void copiarParaMemoria(struct processo *processo, int posicao) {
-    //TODO implementar
+    
+    //Espaco para variaveis meteido a 0.
+    //printf("\npos: %d",posicao);
+    for (int i = posicao; i < 10; i++) {
+    	memoria[i] = 0;
+    }
+
+    //Copiar o codigo do processo para a memoria.
+    posicao += 10;
+
+    for (int i = 0; i < (processo->maxPc) * 3; i++) {
+    	memoria[posicao] = processo->codigo[i];
+    	posicao++;
+    }
 }
 
 void limparExit(int *processo_em_exit, int *n_processos_corridos, struct processo *processos[]) {
@@ -127,13 +169,19 @@ void limparExit(int *processo_em_exit, int *n_processos_corridos, struct process
 
 void percorrerBlock(queue *block, queue *wait, struct processo *processos[], int first, int last) {
     int inst, variavel, prox, posicao;
+
     for (int i = first; i <= last; i++) {
         processos[block->Q[i]]->tempo_que_precisa_de_ficar_em_block--;
+
         if (processos[block->Q[i]]->tempo_que_precisa_de_ficar_em_block == 0) {
-            posicao = processos[i]->pcb->pc * 3 - 3;
+  
+            posicao = (processos[i]->pcb->pc * 3) - 3;
+
             if (posicao < 0) {
+            	printf("\nTOU AQUI A MUDAR A TUA TIA!!\n");
                 posicao = 0;
             }
+
             inst = memoria[processos[i]->posicaoInicial + 10 + posicao];
             variavel = memoria[processos[i]->posicaoInicial + 10 + posicao + 1];
 
@@ -176,7 +224,7 @@ void runParaExit(int *processo_em_run, int *processo_em_exit, queue *block, stru
 
     processos[*processo_em_run]->pcb->estado = 4;
     (*processo_em_exit) = (*processo_em_run);
-//    enqueue(*processo_em_run, block); //burros tinham isto aqui
+	//    enqueue(*processo_em_run, block); //burros tinham isto aqui
     (*processo_em_run) = -1;
 }
 
@@ -193,7 +241,12 @@ void newParaWait(int p_id, queue *wait, struct processo *processos[]) {
     while ((!isFull(wait)) && (n_p < p_id)) {
         if (processos[n_p]->pcb->estado == 0) {
             processos[n_p]->pcb->estado = 1;
-            enqueue(n_p, wait);
+            int posicao = obterPosicao(processos[n_p]);
+
+            if (posicao != -1) {
+            	copiarParaMemoria(processos[n_p], posicao);
+            	enqueue(n_p, wait);
+            }            
         }
         n_p++;
     }
@@ -220,7 +273,7 @@ void receberParaNew(int timer, int p_id, struct processo *processos[]) {
 void printEstados(int timer, int p_id, struct processo *processos[], int *print, int *fork) {
     printf("T: %3d | ", timer);
 
-//print de todos os processos introduzidos
+	//print de todos os processos introduzidos
     for (int n_p = 0; n_p < p_id; n_p++) {
         switch (processos[n_p]->pcb->estado) {
             case -2:
@@ -337,10 +390,10 @@ int main(void) {
             int pInicial = processos[processo_em_run]->posicaoInicial;
             int pc = processos[processo_em_run]->pcb->pc * 3;
 
-//            if (pc < 0) {
-//                processos[processo_em_run]->pcb->pc = 0;
-//                pc = 0;
-//            }
+            /*if (pc < 0) {
+                processos[processo_em_run]->pcb->pc = -processos[processo_em_run]->pcb->pc ;
+                pc = -pc;
+            }*/
 
             if (pc == processos[processo_em_run]->lastPC) {
                 processos[processo_em_run]->pcb->pc += 1;
@@ -360,8 +413,8 @@ int main(void) {
             switch (inst) {
                 case 0:                                                 // x1=x2
                     printf("executar case 0\n");
-                    pmemoria = pInicial + arg1 - 1;
-                    pmemoria2 = pInicial + arg2 - 1;
+                    pmemoria = pInicial + arg1;
+                    pmemoria2 = pInicial + arg2;
                     memoria[pmemoria] = memoria[pmemoria2];
 //                    printf("memoria p: %d %d \n", pmemoria, pmemoria2);
                     processos[processo_em_run]->pcb->pc++;
@@ -369,7 +422,7 @@ int main(void) {
 
                 case 1:                                                 // x=n
                     printf("executar case 1\n");
-                    pmemoria = pInicial + arg1 - 1;
+                    pmemoria = pInicial + arg1;
                     memoria[pmemoria] = arg2;
 //                    printf("memoria p: %d \n", pmemoria);
                     processos[processo_em_run]->pcb->pc++;
@@ -377,7 +430,7 @@ int main(void) {
 
                 case 2:                                                 // x=x+1
                     printf("executar case 2\n");
-                    pmemoria = pInicial + arg1 - 1;
+                    pmemoria = pInicial + arg1;
                     memoria[pmemoria] += 1;
 //                    printf("memoria p: %d \n", pmemoria);
                     processos[processo_em_run]->pcb->pc++;
@@ -385,7 +438,7 @@ int main(void) {
 
                 case 3:                                                 // x=x-1
                     printf("executar case 3\n");
-                    pmemoria = pInicial + arg1 - 1;
+                    pmemoria = pInicial + arg1;
                     memoria[pmemoria] -= 1;
 //                    printf("memoria p: %d \n", pmemoria);
                     processos[processo_em_run]->pcb->pc++;
@@ -393,7 +446,7 @@ int main(void) {
 
                 case 4:                                                 // pc-=N
                     printf("executar case 4\n");
-                    if ((processos[processo_em_run]->pcb->pc - arg1) >= 0)
+                    if (processos[processo_em_run]->pcb->pc - arg1 >= 0)
                         processos[processo_em_run]->pcb->pc -= arg1;
                     else {
                         printf("MEMORY ACCESS VIOLATION 4\n");
@@ -403,7 +456,7 @@ int main(void) {
                 case 5:                                                 // pc+=N
                     printf("executar case 5\n");
                     if (arg1 > 0) {
-                        if ((processos[processo_em_run]->pcb->pc + arg1) <= processos[processo_em_run]->maxPc)
+                        if (processos[processo_em_run]->pcb->pc + arg1 <= processos[processo_em_run]->maxPc)
                             processos[processo_em_run]->pcb->pc += arg1;
                         else {
                             printf("MEMORY ACCESS VIOLATION 5\n");
@@ -414,7 +467,7 @@ int main(void) {
                 case 6:                                                 // if x=0, pc+=N else pc++
                     printf("executar case 6\n");
                     if (arg1 == 0) {
-                        if ((processos[processo_em_run]->pcb->pc += arg2) <= processos[processo_em_run]->maxPc)
+                        if (processos[processo_em_run]->pcb->pc += arg2 <= processos[processo_em_run]->maxPc)
                             processos[processo_em_run]->pcb->pc += arg2;
                         else {
                             printf("MEMORY ACCESS VIOLATION \n");
@@ -435,19 +488,18 @@ int main(void) {
                         int posicao = obterPosicao(processos[p_id]);
                         if (posicao != -1) {
                             copiarParaMemoria(processos[p_id], posicao);
-                            memoria[processos[p_id]->posicaoInicial + arg1 - 1] = 0;
-                            memoria[processos[processo_em_run]->posicaoInicial + arg1 -
-                                    1] = processos[processo_em_run]->pcb->id;
+                            memoria[processos[p_id]->posicaoInicial + arg1] = 0;
+                            memoria[processos[processo_em_run]->posicaoInicial + arg1] = processos[processo_em_run]->pcb->id;
                             p_id++;
                         } else {
                             falhaFork = 1;
-                            memoria[processos[processo_em_run]->posicaoInicial + arg1 - 1] = -1;
+                            memoria[processos[processo_em_run]->posicaoInicial + arg1] = -1;
                             processos[processo_em_run]->pcb->pc++;
                         }
 
                     } else {
                         falhaFork = 1;
-                        memoria[processos[processo_em_run]->posicaoInicial + arg1 - 1] = -1;
+                        memoria[processos[processo_em_run]->posicaoInicial + arg1] = -1;
                         processos[processo_em_run]->pcb->pc++;
                     }
                     break;
@@ -465,7 +517,7 @@ int main(void) {
                     processos[processo_em_run]->pcb->pc++;
                     break;
                 default:
-                    printf("executar case default\n");
+                    printf("executar case default/exit\n");
                     runParaExit(&processo_em_run, &processo_em_exit, block, processos);
                     break;
             }
@@ -491,13 +543,16 @@ int main(void) {
 
         timer++;
         //          SHOW LE MEMORY
-//        for (int i = 0; i < MAX_MEMORIA; i++) {
-//            if (memoria[i] == 11) {
-//                printf("\n");
-//            }
-//            printf("%d ", memoria[i]);
-//        }
-//        printf("\n");
+        for (int i = 0; i < MAX_MEMORIA; i++) {
+        	printf("%d ", memoria[i]);
+            /*if (memoria[i] == 11) {
+            	i++;
+            	printf("%d ", memoria[i]);
+            	i++;
+            	printf("%d \n", memoria[i]);
+            }*/
+        }
+        printf("\n");
 
     }
 
