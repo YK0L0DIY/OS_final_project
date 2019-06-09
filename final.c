@@ -289,8 +289,13 @@ void receberParaNew(int timer, int p_id, struct processo *processos[]) {
     }
 }
 
+void memoriaAlterda() {
+    //TODO colocar print complegto de merda no ficheiro
+}
+
 void printEstados(int timer, int p_id, struct processo *processos[], int *print, int *fork) {
 
+    //TODO coloccar no ficheiro
 //    printf("\n ### \n printEstados \n ### \n");
 
     printf("T: %3d | ", timer);
@@ -502,6 +507,7 @@ int main(void) {
                             processos[p_id] = novoProcesso(timer, processos[processo_em_run]->codigo, newPcb,
                                                            processos[processo_em_run]->maxPc * 3);
                             copiarParaMemoria(processos[p_id], posicao);
+
                             memoria[processos[p_id]->posicaoInicial + arg1 - 1] = 0;
                             memoria[processos[processo_em_run]->posicaoInicial + arg1 -
                                     1] = processos[processo_em_run]->pcb->id;
@@ -555,6 +561,11 @@ int main(void) {
 
         //print do instante e do estado de cada processo que já foi introduzido
         printEstados(timer, p_id, processos, &algoParaImprimir, &falhaFork);
+
+        if (memoriaAlterda) {
+            printMemoria();
+            memoriaAlterada = 0;
+        }
 
         timer++;
         //          SHOW LE MEMORY
