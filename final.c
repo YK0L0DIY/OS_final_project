@@ -58,6 +58,8 @@ struct processo *novoProcesso(int instante, int codigo[N_MAXIMO_DE_INSTRUCOES * 
 
 int obterPosicao(struct processo *processo) {
 
+	printf("\n ### \n obterPosicao \n ### \n");
+
 	int inicio,
 		novoInicio,
 		fim,
@@ -138,18 +140,20 @@ int obterPosicao(struct processo *processo) {
 
 void copiarParaMemoria(struct processo *processo, int posicao) {
 
+	printf("\n ### \n copiarParaMemoria \n ### \n");
+
 	processo->posicaoInicial = posicao;
     
     //Espaco para variaveis meteido a 0.
     //printf("\npos: %d",posicao);
-    for (int i = posicao; i < 10; i++) {
+    /*for (int i = posicao; i < 10; i++) {
     	memoria[i] = 0;
-    }
+    }*/
 
     //Copiar o codigo do processo para a memoria.
     posicao += 10;
 
-    for (int i = 0; i < (processo->maxPc) * 3; i++) {
+    for (int i = 0; i <= (processo->maxPc) * 3; i++) {
     	memoria[posicao] = processo->codigo[i];
     	posicao++;
     }
@@ -159,6 +163,8 @@ void copiarParaMemoria(struct processo *processo, int posicao) {
 }
 
 void limparExit(int *processo_em_exit, int *n_processos_corridos, struct processo *processos[]) {
+
+	printf("\n ### \n limparExit \n ### \n");
 
     if (*processo_em_exit != -1) {
         for (int x = processos[*processo_em_exit]->posicaoInicial;
@@ -173,6 +179,9 @@ void limparExit(int *processo_em_exit, int *n_processos_corridos, struct process
 }
 
 void percorrerBlock(queue *block, queue *wait, struct processo *processos[], int first, int last) {
+
+	printf("\n ### \n percorrerBlock \n ### \n");
+
     int inst, variavel, prox, posicao;
 
     for (int i = first; i <= last; i++) {
@@ -205,6 +214,8 @@ void percorrerBlock(queue *block, queue *wait, struct processo *processos[], int
 
 void blockParaWait(queue *block, queue *wait, struct processo *processos[]) {
 
+	printf("\n ### \n blockParaWait \n ### \n");
+
     if (!isEmpty(block)) {
         if (block->first <= block->last) {
             percorrerBlock(block, wait, processos, block->first, block->last);
@@ -217,6 +228,8 @@ void blockParaWait(queue *block, queue *wait, struct processo *processos[]) {
 
 void runParaBlock(int *processo_em_run, queue *block, struct processo *processos[]) {
 
+	printf("\n ### \n runParaBlock \n ### \n");
+
     processos[*processo_em_run]->pcb->pc++;
     processos[*processo_em_run]->pcb->estado = 3;
     processos[*processo_em_run]->tempo_que_precisa_de_ficar_em_block = 3;
@@ -227,13 +240,17 @@ void runParaBlock(int *processo_em_run, queue *block, struct processo *processos
 
 void runParaExit(int *processo_em_run, int *processo_em_exit, queue *block, struct processo *processos[]) {
 
+	printf("\n ### \n runParaExit \n ### \n");
+
     processos[*processo_em_run]->pcb->estado = 4;
     (*processo_em_exit) = (*processo_em_run);
-	//    enqueue(*processo_em_run, block); //burros tinham isto aqui
+	//enqueue(*processo_em_run, block); //burros tinham isto aqui
     (*processo_em_run) = -1;
 }
 
 void runParaWait(int *processo_em_run, queue *wait, struct processo *processos[]) {
+
+	printf("\n ### \n runParaWait \n ### \n");
 
     processos[*processo_em_run]->pcb->estado = 1;
     enqueue(*processo_em_run, wait);
@@ -241,6 +258,9 @@ void runParaWait(int *processo_em_run, queue *wait, struct processo *processos[]
 }
 
 void newParaWait(int p_id, queue *wait, struct processo *processos[]) {
+
+	printf("\n ### \n newParaWait \n ### \n");
+
 
     int n_p = 0;
     while ((!isFull(wait)) && (n_p < p_id)) {
@@ -259,6 +279,9 @@ void newParaWait(int p_id, queue *wait, struct processo *processos[]) {
 
 void waitParaRun(int *processo_em_run, queue *wait, struct processo *processos[]) {
 
+	printf("\n ### \n waitParaRun \n ### \n");
+
+
     if (((*processo_em_run) == -1) && (!isEmpty(wait))) {
         (*processo_em_run) = dequeue(wait);
         processos[*processo_em_run]->pcb->estado = 2; // processo passa para run
@@ -268,6 +291,8 @@ void waitParaRun(int *processo_em_run, queue *wait, struct processo *processos[]
 
 void receberParaNew(int timer, int p_id, struct processo *processos[]) {
 
+	printf("\n ### \n receberParaNew \n ### \n");
+
     for (int n_p = 0; n_p < p_id; n_p++) {
         if (processos[n_p]->instante == timer) {
             processos[n_p]->pcb->estado = 0;
@@ -276,6 +301,9 @@ void receberParaNew(int timer, int p_id, struct processo *processos[]) {
 }
 
 void printEstados(int timer, int p_id, struct processo *processos[], int *print, int *fork) {
+
+	printf("\n ### \n printEstados \n ### \n");
+
     printf("T: %3d | ", timer);
 
 	//print de todos os processos introduzidos
@@ -322,7 +350,7 @@ void debugPrint(int p_id, struct processo *processos[]) {
 
     for (int i = 0; i < p_id; i++) {
         aux = processos[i];
-        printf("%d estado: %d | instante = %d", aux->pcb->id, aux->pcb->estado, aux->instante);
+        printf("%d estado: %d | pi = %d | pc = %d", aux->pcb->id, aux->pcb->estado, aux->posicaoInicial, aux->pcb->pc);
         printf("\n");
     }
 
@@ -378,6 +406,8 @@ int main(void) {
         //printf("\ttime: %d\n", timer);
         if (n_processos_corridos == p_id)
             break;
+       
+       debugPrint(p_id, processos);
 
         // exit
         limparExit(&processo_em_exit, &n_processos_corridos, processos);
@@ -400,11 +430,11 @@ int main(void) {
                 pc = -pc;
             }*/
 
-            if (pc == processos[processo_em_run]->lastPC) {
+            /*if (pc == processos[processo_em_run]->lastPC) {
                 processos[processo_em_run]->pcb->pc += 1;
                 pc += 3;
             }
-            processos[processo_em_run]->lastPC = pc;
+            processos[processo_em_run]->lastPC = pc;*/
 
             int inst = memoria[pInicial + pc + 10],
                     arg1 = memoria[pInicial + pc + 11],
@@ -563,7 +593,7 @@ int main(void) {
     }
 
     //print de todos os processos introduzidos, descomentar para ver.
-    debugPrint(p_id, processos);
+    //debugPrint(p_id, processos);
 
     return 0;
 }
