@@ -502,7 +502,14 @@ int main(void) {
                     if (processos[processo_em_run]->pcb->pc - arg1 >= 0)
                         processos[processo_em_run]->pcb->pc -= arg1;
                     else {
-                        printf("MEMORY ACCESS VIOLATION 4\n");
+                        FILE *file = fopen("scheduler_complexo.out", "a");
+                        FILE *file2 = fopen("scheduler_simples.out", "a");
+
+                        fprintf(file, "MEMORY ACCESS VIOLATION 4\n");
+                        fprintf(file2, "MEMORY ACCESS VIOLATION 4\n");
+
+                        fclose(file);
+                        fclose(file2);
                         runParaExit(&processo_em_run, &processo_em_exit, block, processos);
                     }
                     break;
@@ -512,7 +519,15 @@ int main(void) {
                         if (processos[processo_em_run]->pcb->pc + arg1 <= processos[processo_em_run]->maxPc)
                             processos[processo_em_run]->pcb->pc += arg1;
                         else {
-                            printf("MEMORY ACCESS VIOLATION 5\n");
+                            FILE *file = fopen("scheduler_complexo.out", "a");
+                            FILE *file2 = fopen("scheduler_simples.out", "a");
+
+                            fprintf(file, "MEMORY ACCESS VIOLATION 5\n");
+                            fprintf(file2, "MEMORY ACCESS VIOLATION 5\n");
+
+                            fclose(file);
+                            fclose(file2);
+
                             runParaExit(&processo_em_run, &processo_em_exit, block, processos);
                         }
                     }
@@ -523,8 +538,14 @@ int main(void) {
                         if (processos[processo_em_run]->pcb->pc += arg2 <= processos[processo_em_run]->maxPc)
                             processos[processo_em_run]->pcb->pc += arg2;
                         else {
-                            printf("MEMORY ACCESS VIOLATION \n");
-                            runParaExit(&processo_em_run, &processo_em_exit, block, processos);
+                            FILE *file = fopen("scheduler_complexo.out", "a");
+                            FILE *file2 = fopen("scheduler_simples.out", "a");
+
+                            fprintf(file, "MEMORY ACCESS VIOLATION 6\n");
+                            fprintf(file2, "MEMORY ACCESS VIOLATION 6\n");
+
+                            fclose(file);
+                            fclose(file2);                            runParaExit(&processo_em_run, &processo_em_exit, block, processos);
                         }
                     } else
                         processos[processo_em_run]->pcb->pc++;
