@@ -24,6 +24,7 @@ struct pcb *novoPcb(int id, int pc, short estado) {
     pcb->id = id;
     pcb->pc = pc;
     pcb->estado = estado; //-1 - n introduzido, 0 -NEW, 1 - WAIT, 2 - RUN, 3 - BLOCK, 4 - EXIT
+
     return pcb;
 }
 
@@ -42,27 +43,28 @@ struct processo *novoProcesso(int instante, int codigo[N_MAXIMO_DE_INSTRUCOES * 
     struct processo *processo = malloc(sizeof(struct processo));
     int i;
     processo->instante = instante;
+
     for (i = 0; i <= size; i++) {
         processo->codigo[i] = codigo[i];
     }
+
     processo->posicaoInicial = 0;
     processo->posicaoFinal = 0;
     processo->quantum = 0;
     processo->tempo_que_precisa_de_ficar_em_block = 3;
     processo->pcb = pcb;
     processo->maxPc = size / 3;
+
     return processo;
 }
 
 int obterPosicao(struct processo *processo) {
 
-//    printf("\n ### \n obterPosicao \n ### \n");
-
     int inicio,
-            novoInicio,
-            fim,
-            espacoDisponivel = MAX_MEMORIA + 1,
-            espacoNecessario = processo->maxPc * 3 + 10;
+        novoInicio,
+        fim,
+        espacoDisponivel = MAX_MEMORIA + 1,
+        espacoNecessario = processo->maxPc * 3 + 10;
 
     if (FIT == 1) {          //bestfit
 
@@ -122,6 +124,7 @@ int obterPosicao(struct processo *processo) {
             }
 
         }
+
         //Caso não tenha encontrado do ultimo apontador até ao fim, vê do inicio ao ultimo apontador.
         for (int y = 0; y < apontadorDaUltimaAlocacao; y++) {
 
@@ -141,11 +144,9 @@ int obterPosicao(struct processo *processo) {
 
 void copiarParaMemoria(struct processo *processo, int posicao) {
 
-//    printf("\n ### \n copiarParaMemoria \n ### \n");
     processo->posicaoInicial = posicao;
 
     //Copiar o codigo do processo para a memoria.
-
     posicao += 10;
 
     for (int i = 0; i < (processo->maxPc) * 3; i++) {
@@ -167,14 +168,12 @@ void printMemoria() {
         }
         fprintf(file, "%d ", memoria[i]);
     }
-    fprintf(file, "\n");
 
+    fprintf(file, "\n");
     fclose(file);
 }
 
 void limparExit(int *processo_em_exit, int *n_processos_corridos, struct processo *processos[]) {
-
-//    printf("\n ### \n limparExit \n ### \n");
 
     if (*processo_em_exit != -1) {
         for (int x = processos[*processo_em_exit]->posicaoInicial;
@@ -190,8 +189,6 @@ void limparExit(int *processo_em_exit, int *n_processos_corridos, struct process
 }
 
 void percorrerBlock(queue *block, queue *wait, struct processo *processos[], int first, int last) {
-
-//    printf("\n ### \n percorrerBlock \n ### \n");
 
     int inst, variavel, prox, posicao;
 
@@ -220,8 +217,6 @@ void percorrerBlock(queue *block, queue *wait, struct processo *processos[], int
 
 void blockParaWait(queue *block, queue *wait, struct processo *processos[]) {
 
-//    printf("\n ### \n blockParaWait \n ### \n");
-
     if (!isEmpty(block)) {
         if (block->first <= block->last) {
             percorrerBlock(block, wait, processos, block->first, block->last);
@@ -234,8 +229,6 @@ void blockParaWait(queue *block, queue *wait, struct processo *processos[]) {
 
 void runParaBlock(int *processo_em_run, queue *block, struct processo *processos[]) {
 
-//    printf("\n ### \n runParaBlock \n ### \n");
-
     processos[*processo_em_run]->pcb->pc++;
     processos[*processo_em_run]->pcb->estado = 3;
     processos[*processo_em_run]->tempo_que_precisa_de_ficar_em_block = 3;
@@ -246,17 +239,12 @@ void runParaBlock(int *processo_em_run, queue *block, struct processo *processos
 
 void runParaExit(int *processo_em_run, int *processo_em_exit, queue *block, struct processo *processos[]) {
 
-//    printf("\n ### \n runParaExit \n ### \n");
-
     processos[*processo_em_run]->pcb->estado = 4;
     (*processo_em_exit) = (*processo_em_run);
-    //enqueue(*processo_em_run, block); //burros tinham isto aqui
     (*processo_em_run) = -1;
 }
 
 void runParaWait(int *processo_em_run, queue *wait, struct processo *processos[]) {
-
-//    printf("\n ### \n runParaWait \n ### \n");
 
     processos[*processo_em_run]->pcb->estado = 1;
     enqueue(*processo_em_run, wait);
@@ -265,10 +253,8 @@ void runParaWait(int *processo_em_run, queue *wait, struct processo *processos[]
 
 void newParaWait(int p_id, queue *wait, struct processo *processos[]) {
 
-//    printf("\n ### \n newParaWait \n ### \n");
-
-
     int n_p = 0;
+    
     while ((!isFull(wait)) && (n_p < p_id)) {
         if (processos[n_p]->pcb->estado == 0) {
             processos[n_p]->pcb->estado = 1;
@@ -287,8 +273,6 @@ void newParaWait(int p_id, queue *wait, struct processo *processos[]) {
 
 void waitParaRun(int *processo_em_run, queue *wait, struct processo *processos[]) {
 
-//    printf("\n ### \n waitParaRun \n ### \n");
-
     if (((*processo_em_run) == -1) && (!isEmpty(wait))) {
         (*processo_em_run) = dequeue(wait);
         processos[*processo_em_run]->pcb->estado = 2; // processo passa para run
@@ -298,8 +282,6 @@ void waitParaRun(int *processo_em_run, queue *wait, struct processo *processos[]
 
 void receberParaNew(int timer, int p_id, struct processo *processos[]) {
 
-//    printf("\n ### \n receberParaNew \n ### \n");
-
     for (int n_p = 0; n_p < p_id; n_p++) {
         if (processos[n_p]->instante == timer && processos[n_p]->pcb->estado == -1) {
             processos[n_p]->pcb->estado = 0;
@@ -308,8 +290,6 @@ void receberParaNew(int timer, int p_id, struct processo *processos[]) {
 }
 
 void printEstados(int timer, int p_id, struct processo *processos[], int *print, int *fork) {
-
-//    printf("\n ### \n printEstados \n ### \n");
 
     FILE *file = fopen("scheduler_complexo.out", "a");
     FILE *file2 = fopen("scheduler_simples.out", "a");
@@ -325,47 +305,55 @@ void printEstados(int timer, int p_id, struct processo *processos[], int *print,
                 fprintf(file, "      | ");
                 fprintf(file2, "      | ");
                 break;
+
             case 0:
                 fprintf(file, "NEW   | ");
                 fprintf(file2, "NEW   | ");
                 break;
+
             case 1:
                 fprintf(file, "WAIT  | ");
                 fprintf(file2, "WAIT  | ");
-
                 break;
+
             case 2:
                 fprintf(file, "RUN   | ");
                 fprintf(file2, "RUN   | ");
                 break;
+
             case 3:
                 fprintf(file, "BLOCK | ");
                 fprintf(file2, "BLOCK | ");
                 break;
+
             case 4:
                 fprintf(file, "EXIT  | ");
                 fprintf(file2, "EXIT  | ");
                 break;
+
             default:
                 break;
         }
-
     }
+
     if (*print != -1) {
         fprintf(file, "  %d", *print);
         fprintf(file2, "  %d", *print);
         *print = -1;
     }
+
     if (*fork == 1) {
         fprintf(file, " falha no fork");
         fprintf(file2, " falha no fork");
         *fork = 0;
     }
+
     fprintf(file, "\n");
     fprintf(file2, "\n");
 
     fclose(file);
     fclose(file2);
+
 }
 
 void debugPrint(int p_id, struct processo *processos[]) {
@@ -375,21 +363,25 @@ void debugPrint(int p_id, struct processo *processos[]) {
 
     for (int i = 0; i < p_id; i++) {
         aux = processos[i];
-        printf("%d estado: %d | pi = %d | pc = %d | pf = %d", aux->pcb->id, aux->pcb->estado, aux->posicaoInicial,
+        printf("%d estado: %d | pi = %d | pc = %d | pf = %d\n", aux->pcb->id, aux->pcb->estado, aux->posicaoInicial,
                aux->pcb->pc, aux->posicaoFinal);
-        printf("\n");
     }
-
 }
 
 int main(void) {
 
-    int instante, p_id = 0, controlo, n_processos_corridos = 0,
-            timer = 0, processo_em_run = -1, processo_em_exit = -1,
-            algoParaImprimir = -1, falhaFork = 0;
+    int instante, 
+        p_id = 0, 
+        controlo, 
+        n_processos_corridos = 0,
+        timer = 0,
+        processo_em_run = -1,
+        processo_em_exit = -1,
+        algoParaImprimir = -1, 
+        falhaFork = 0;
 
     struct processo *processos[N_MAXIMO_DE_PROCESSOS] = {0};
-    char test;
+    char terminator;
 
     fclose(fopen("scheduler_complexo.out", "w"));
     fclose(fopen("scheduler_simples.out", "w"));
@@ -406,9 +398,9 @@ int main(void) {
         controlo = 0;
         struct pcb *nPCB = novoPcb(p_id, 0, -1);            // novo pcb para cada programa
 
-        while (scanf("%c", &test) == 1) {                   // le a linha toda ate ao \n "codigo"
+        while (scanf("%c", &terminator) == 1) {                   // le a linha toda ate ao \n "codigo"
 
-            if (test == '\n') {
+            if (terminator == '\n') {
                 break;
             }
 
@@ -435,7 +427,7 @@ int main(void) {
         if (n_processos_corridos == p_id)
             break;
 
-//        debugPrint(p_id, processos);
+        //debugPrint(p_id, processos);
 
         // exit
         limparExit(&processo_em_exit, &n_processos_corridos, processos);
@@ -458,49 +450,35 @@ int main(void) {
                     arg1 = memoria[pInicial + pc + 11],
                     arg2 = memoria[pInicial + pc + 12];
 
-//            printf("\n pc + pi : %d , pc: %d \n ", pc + pInicial + 10, pc);
-//            printf("%d %d %d\n", inst, arg1, arg2);
-
-            int pmemoria, pmemoria2;
+            int pmemoria = pInicial + arg1 - 1,
+                pmemoria2 = pInicial + arg2 - 1;
 
             switch (inst) {
-                case 0:                                                 // x1=x2
-//                    printf("executar case 0\n");
-                    pmemoria = pInicial + arg1 - 1;
-                    pmemoria2 = pInicial + arg2 - 1;
+                case 0:                                                 // x1=x2            
                     memoria[pmemoria] = memoria[pmemoria2];
-//                    printf("memoria p: %d %d \n", pmemoria, pmemoria2);
                     processos[processo_em_run]->pcb->pc++;
                     break;
 
                 case 1:                                                 // x=n
-//                    printf("executar case 1\n");
-                    pmemoria = pInicial + arg1 - 1;
+
                     memoria[pmemoria] = arg2;
-//                    printf("memoria p: %d \n", pmemoria);
                     processos[processo_em_run]->pcb->pc++;
                     break;
 
                 case 2:                                                 // x=x+1
-//                    printf("executar case 2\n");
-                    pmemoria = pInicial + arg1 - 1;
                     memoria[pmemoria] += 1;
-//                    printf("memoria p: %d \n", pmemoria);
                     processos[processo_em_run]->pcb->pc++;
                     break;
 
                 case 3:                                                 // x=x-1
-//                    printf("executar case 3\n");
-                    pmemoria = pInicial + arg1 - 1;
                     memoria[pmemoria] -= 1;
-//                    printf("memoria p: %d \n", pmemoria);
                     processos[processo_em_run]->pcb->pc++;
                     break;
 
                 case 4:                                                 // pc-=N
-//                    printf("executar case 4\n");
                     if (processos[processo_em_run]->pcb->pc - arg1 >= 0)
                         processos[processo_em_run]->pcb->pc -= arg1;
+
                     else {
                         FILE *file = fopen("scheduler_complexo.out", "a");
                         FILE *file2 = fopen("scheduler_simples.out", "a");
@@ -513,11 +491,12 @@ int main(void) {
                         runParaExit(&processo_em_run, &processo_em_exit, block, processos);
                     }
                     break;
+
                 case 5:                                                 // pc+=N
-//                    printf("executar case 5\n");
                     if (arg1 > 0) {
                         if (processos[processo_em_run]->pcb->pc + arg1 <= processos[processo_em_run]->maxPc)
                             processos[processo_em_run]->pcb->pc += arg1;
+
                         else {
                             FILE *file = fopen("scheduler_complexo.out", "a");
                             FILE *file2 = fopen("scheduler_simples.out", "a");
@@ -532,11 +511,12 @@ int main(void) {
                         }
                     }
                     break;
+
                 case 6:                                                 // if x=0, pc+=N else pc++
-//                    printf("executar case 6\n");
                     if (arg1 == 0) {
                         if (processos[processo_em_run]->pcb->pc += arg2 <= processos[processo_em_run]->maxPc)
                             processos[processo_em_run]->pcb->pc += arg2;
+
                         else {
                             FILE *file = fopen("scheduler_complexo.out", "a");
                             FILE *file2 = fopen("scheduler_simples.out", "a");
@@ -545,15 +525,16 @@ int main(void) {
                             fprintf(file2, "MEMORY ACCESS VIOLATION 6\n");
 
                             fclose(file);
-                            fclose(file2);                            runParaExit(&processo_em_run, &processo_em_exit, block, processos);
+                            fclose(file2);                            
+                            runParaExit(&processo_em_run, &processo_em_exit, block, processos);
                         }
+
                     } else
                         processos[processo_em_run]->pcb->pc++;
 
                     break;
-                case 7:                                                 // fork
-//                    printf("executar case 7\n");
 
+                case 7:                                                 // fork
                     if (!isFull(wait)) {
                         int posicao = obterPosicao(processos[processo_em_run]);
 
@@ -580,26 +561,29 @@ int main(void) {
                     }
                     processos[processo_em_run]->pcb->pc++;
                     break;
+
                 case 8:                                                 // guardar no disco
-//                    printf("executar case 8\n");
                     runParaBlock(&processo_em_run, block, processos);
                     break;
+
                 case 9:                                                 // ler do disco
-//                    printf("executar case 9\n");
                     runParaBlock(&processo_em_run, block, processos);
                     break;
+
                 case 10:                                                // imprimir variavel
-//                    printf("executar case 10\n");
                     algoParaImprimir = memoria[pInicial + arg1];
                     processos[processo_em_run]->pcb->pc++;
                     break;
+
                 default:
-//                    printf("executar case default/exit\n");
                     runParaExit(&processo_em_run, &processo_em_exit, block, processos);
                     break;
             }
+
+            //Se houver 1 processo em run, diminuir o quantum.
             if (processo_em_run != -1) {
                 processos[processo_em_run]->quantum--;
+
                 if (processos[processo_em_run]->quantum == 0) {
                     runParaWait(&processo_em_run, wait, processos);
                 }

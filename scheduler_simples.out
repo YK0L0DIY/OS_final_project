@@ -1,12 +1,22 @@
 T:   0 | NEW   | 
 T:   1 | RUN   | NEW   | 
-T:   2 | RUN   | WAIT  | 
-T:   3 | RUN   | WAIT  | 
-T:   4 | RUN   | WAIT  | 
-T:   5 | WAIT  | RUN   | 
-T:   6 | WAIT  | RUN   | 
-MEMORY ACCESS VIOLATION 5
-T:   7 | RUN   | EXIT  | 
-T:   8 | RUN   |       | 
-T:   9 | EXIT  |       | 
-T:  10 |       |       | 
+T:   2 | RUN   | WAIT  | NEW   | 
+T:   3 | EXIT  | RUN   | WAIT  | NEW   | 
+T:   4 |       | RUN   | WAIT  | WAIT  | 
+T:   5 |       | BLOCK | RUN   | WAIT  | NEW   | 
+T:   6 |       | BLOCK | RUN   | WAIT  | WAIT  | 
+T:   7 |       | BLOCK | EXIT  | RUN   | WAIT  | 
+T:   8 |       | WAIT  |       | RUN   | WAIT  | 
+T:   9 |       | WAIT  |       | BLOCK | RUN   | 
+T:  10 |       | WAIT  |       | BLOCK | RUN   | 
+T:  11 |       | RUN   |       | BLOCK | EXIT  | 
+T:  12 |       | RUN   |       | WAIT  |       | 
+T:  13 |       | BLOCK |       | RUN   |       | 
+T:  14 |       | BLOCK |       | RUN   |       | 
+T:  15 |       | BLOCK |       | BLOCK |       | 
+T:  16 |       | RUN   |       | BLOCK |       | 
+T:  17 |       | RUN   |       | BLOCK |       | 
+T:  18 |       | EXIT  |       | RUN   |       | 
+T:  19 |       |       |       | RUN   |       | 
+T:  20 |       |       |       | EXIT  |       | 
+T:  21 |       |       |       |       |       | 
