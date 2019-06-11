@@ -7,7 +7,7 @@
 #define N_MAXIMO_DE_PROCESSOS 30
 #define MAX_MEMORIA 300
 #define QUANTUM 4
-#define FIT 1               // 1 -> bestfit | 0 -> nexfit
+#define FIT 0               // 1 -> bestfit | 0 -> nexfit
 
 int disk;
 int memoria[MAX_MEMORIA];
@@ -142,16 +142,29 @@ int obterPosicao(struct processo *processo) {
     }
 }
 
-void copiarParaMemoria(struct processo *processo, int posicao) {
+void copiarParaMemoria(struct processo *processos[], struct processo *processo, int posicao, int pid_pai) {
 
     processo->posicaoInicial = posicao;
 
-    //Copiar o codigo do processo para a memoria.
-    posicao += 10;
+    if (pid_pai != -1){
 
-    for (int i = 0; i < (processo->maxPc) * 3; i++) {
-        memoria[posicao] = processo->codigo[i];
-        posicao++;
+        int posIPai = processos[pid_pai]->posicaoInicial,
+            posFPai = processos[pid_pai]->posicaoFinal;
+
+        for (int i = posIPai; i <= posFPai; i++) {
+            memoria[posicao] = memoria[i];
+            posicao++;
+        }
+
+    } else {
+
+        //Copiar o codigo do processo para a memoria.
+        posicao += 10;
+
+        for (int i = 0; i < (processo->maxPc) * 3; i++) {
+            memoria[posicao] = processo->codigo[i];
+            posicao++;
+        }
     }
 
     processo->posicaoFinal = posicao - 1;
@@ -261,7 +274,7 @@ void newParaWait(int p_id, queue *wait, struct processo *processos[]) {
             int posicao = obterPosicao(processos[n_p]);
 
             if (posicao != -1) {
-                copiarParaMemoria(processos[n_p], posicao);
+                copiarParaMemoria(processos, processos[n_p], posicao, -1);
                 enqueue(n_p, wait);
                 printMemoria();
             }
@@ -509,7 +522,10 @@ int main(void) {
 
                             runParaExit(&processo_em_run, &processo_em_exit, block, processos);
                         }
-                    }
+
+                    } else if(arg1 == 0) {
+                        processos[processo_em_run]->pcb->pc++;
+                    }                    
                     break;
 
                 case 6:                                                 // if x=0, pc+=N else pc++
@@ -535,6 +551,8 @@ int main(void) {
                     break;
 
                 case 7:                                                 // fork
+                    processos[processo_em_run]->pcb->pc++;
+
                     if (!isFull(wait)) {
                         int posicao = obterPosicao(processos[processo_em_run]);
 
@@ -542,7 +560,8 @@ int main(void) {
                             struct pcb *newPcb = novoPcb(p_id, processos[processo_em_run]->pcb->pc + 1, 1);
                             processos[p_id] = novoProcesso(timer, processos[processo_em_run]->codigo, newPcb,
                                                            processos[processo_em_run]->maxPc * 3);
-                            copiarParaMemoria(processos[p_id], posicao);
+
+                            copiarParaMemoria(processos, processos[p_id], posicao, processo_em_run);
 
                             memoria[processos[p_id]->posicaoInicial + arg1 - 1] = 0;
                             memoria[processos[processo_em_run]->posicaoInicial + arg1 -
@@ -550,6 +569,7 @@ int main(void) {
                             enqueue(p_id, wait);
                             printMemoria();
                             p_id++;
+
                         } else {
                             falhaFork = 1;
                             memoria[processos[processo_em_run]->posicaoInicial + arg1 - 1] = -1;
@@ -559,7 +579,7 @@ int main(void) {
                         falhaFork = 1;
                         memoria[processos[processo_em_run]->posicaoInicial + arg1 - 1] = -1;
                     }
-                    processos[processo_em_run]->pcb->pc++;
+                    debugPrint(p_id, processos);
                     break;
 
                 case 8:                                                 // guardar no disco
