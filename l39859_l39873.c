@@ -176,7 +176,7 @@ void printMemoria() {
     FILE *file = fopen("scheduler_complexo.out", "a");
 
     for (int i = 0; i < MAX_MEMORIA; i++) {
-        if (i % 20 == 0 && i != 0) {
+        if (i % 30 == 0 && i != 0) {
             fprintf(file, "\n");
         }
         fprintf(file, "%d ", memoria[i]);
@@ -369,6 +369,19 @@ void printEstados(int timer, int p_id, struct processo *processos[], int *print,
 
 }
 
+void violacaoMemoria(int *processo_em_run, int *processo_em_exit, queue *block, struct processo *processos[]){
+
+    FILE *file = fopen("scheduler_complexo.out", "a");
+    FILE *file2 = fopen("scheduler_simples.out", "a");
+
+    fprintf(file, "MEMORY ACCESS VIOLATION\n");
+    fprintf(file2, "MEMORY ACCESS VIOLATION\n");
+
+    fclose(file);
+    fclose(file2);                            
+    runParaExit(processo_em_run, processo_em_exit, block, processos);
+}
+
 void debugPrint(int p_id, struct processo *processos[]) {
 
     printf("\nPROCESSOS\n");
@@ -454,19 +467,24 @@ int main(void) {
         // run -> wait verificar se atingiu o quantum Q=4 (max) se Q=0 passa para wait
         if (processo_em_run != -1) {
 
-            //vai a memoria apanhar oque esta nas posicoes
-            int pInicial = processos[processo_em_run]->posicaoInicial;
-            int pc = processos[processo_em_run]->pcb->pc * 3;
+            if (processos[processo_em_run]->pcb->pc > processos[processo_em_run]->maxPc - 1) {
+                violacaoMemoria(&processo_em_run, &processo_em_exit, block, processos);
+
+            } else {
+
+                 //vai a memoria apanhar oque esta nas posicoes
+                int pInicial = processos[processo_em_run]->posicaoInicial;
+                int pc = processos[processo_em_run]->pcb->pc * 3;
 
 
-            int inst = memoria[pInicial + pc + 10],
-                    arg1 = memoria[pInicial + pc + 11],
-                    arg2 = memoria[pInicial + pc + 12];
+                int inst = memoria[pInicial + pc + 10],
+                        arg1 = memoria[pInicial + pc + 11],
+                        arg2 = memoria[pInicial + pc + 12];
 
-            int pmemoria = pInicial + arg1 - 1,
-                pmemoria2 = pInicial + arg2 - 1;
+                int pmemoria = pInicial + arg1 - 1,
+                    pmemoria2 = pInicial + arg2 - 1;
 
-            switch (inst) {
+                switch (inst) {
                 case 0:                                                 // x1=x2            
                     memoria[pmemoria] = memoria[pmemoria2];
                     processos[processo_em_run]->pcb->pc++;
@@ -493,15 +511,7 @@ int main(void) {
                         processos[processo_em_run]->pcb->pc -= arg1;
 
                     else {
-                        FILE *file = fopen("scheduler_complexo.out", "a");
-                        FILE *file2 = fopen("scheduler_simples.out", "a");
-
-                        fprintf(file, "MEMORY ACCESS VIOLATION 4\n");
-                        fprintf(file2, "MEMORY ACCESS VIOLATION 4\n");
-
-                        fclose(file);
-                        fclose(file2);
-                        runParaExit(&processo_em_run, &processo_em_exit, block, processos);
+                        violacaoMemoria(&processo_em_run, &processo_em_exit, block, processos);
                     }
                     break;
 
@@ -511,16 +521,7 @@ int main(void) {
                             processos[processo_em_run]->pcb->pc += arg1;
 
                         else {
-                            FILE *file = fopen("scheduler_complexo.out", "a");
-                            FILE *file2 = fopen("scheduler_simples.out", "a");
-
-                            fprintf(file, "MEMORY ACCESS VIOLATION 5\n");
-                            fprintf(file2, "MEMORY ACCESS VIOLATION 5\n");
-
-                            fclose(file);
-                            fclose(file2);
-
-                            runParaExit(&processo_em_run, &processo_em_exit, block, processos);
+                            violacaoMemoria(&processo_em_run, &processo_em_exit, block, processos);
                         }
 
                     } else if(arg1 == 0) {
@@ -534,15 +535,7 @@ int main(void) {
                             processos[processo_em_run]->pcb->pc += arg2;
 
                         else {
-                            FILE *file = fopen("scheduler_complexo.out", "a");
-                            FILE *file2 = fopen("scheduler_simples.out", "a");
-
-                            fprintf(file, "MEMORY ACCESS VIOLATION 6\n");
-                            fprintf(file2, "MEMORY ACCESS VIOLATION 6\n");
-
-                            fclose(file);
-                            fclose(file2);                            
-                            runParaExit(&processo_em_run, &processo_em_exit, block, processos);
+                            violacaoMemoria(&processo_em_run, &processo_em_exit, block, processos);
                         }
 
                     } else
@@ -579,7 +572,7 @@ int main(void) {
                         falhaFork = 1;
                         memoria[processos[processo_em_run]->posicaoInicial + arg1 - 1] = -1;
                     }
-                    debugPrint(p_id, processos);
+                    //debugPrint(p_id, processos);
                     break;
 
                 case 8:                                                 // guardar no disco
@@ -599,6 +592,9 @@ int main(void) {
                     runParaExit(&processo_em_run, &processo_em_exit, block, processos);
                     break;
             }
+            }
+
+            
 
             //Se houver 1 processo em run, diminuir o quantum.
             if (processo_em_run != -1) {
