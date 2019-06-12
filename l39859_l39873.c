@@ -482,74 +482,74 @@ int main(void) {
                         arg2 = memoria[pInicial + pc + 12];
 
                 int pmemoria = pInicial + arg1 - 1,
-                    pmemoria2 = pInicial + arg2 - 1;
+                    pmemoria2 = pInicial + arg2 - 1,
+                    posicao;
 
                 switch (inst) {
-                case 0:                                                 // x1=x2            
-                    memoria[pmemoria] = memoria[pmemoria2];
-                    processos[processo_em_run]->pcb->pc++;
-                    break;
+	                case 0:                                                 // x1=x2            
+	                    memoria[pmemoria] = memoria[pmemoria2];
+	                    processos[processo_em_run]->pcb->pc++;
+	                    break;
 
-                case 1:                                                 // x=n
+	                case 1:                                                 // x=n
 
-                    memoria[pmemoria] = arg2;
-                    processos[processo_em_run]->pcb->pc++;
-                    break;
+	                    memoria[pmemoria] = arg2;
+	                    processos[processo_em_run]->pcb->pc++;
+	                    break;
 
-                case 2:                                                 // x=x+1
-                    memoria[pmemoria] += 1;
-                    processos[processo_em_run]->pcb->pc++;
-                    break;
+	                case 2:                                                 // x=x+1
+	                    memoria[pmemoria] += 1;
+	                    processos[processo_em_run]->pcb->pc++;
+	                    break;
 
-                case 3:                                                 // x=x-1
-                    memoria[pmemoria] -= 1;
-                    processos[processo_em_run]->pcb->pc++;
-                    break;
+	                case 3:                                                 // x=x-1
+	                    memoria[pmemoria] -= 1;
+	                    processos[processo_em_run]->pcb->pc++;
+	                    break;
 
-                case 4:                                                 // pc-=N
-                    if (processos[processo_em_run]->pcb->pc - arg1 >= 0)
-                        processos[processo_em_run]->pcb->pc -= arg1;
+	                case 4:                                                 // pc-=N
+	                    if (processos[processo_em_run]->pcb->pc - arg1 >= 0){
+	                        processos[processo_em_run]->pcb->pc -= arg1;
+	                    }
 
-                    else {
-                        violacaoMemoria(&processo_em_run, &processo_em_exit, block, processos);
-                    }
-                    break;
+	                    else {
+	                        violacaoMemoria(&processo_em_run, &processo_em_exit, block, processos);
+	                    }
+	                    break;
 
-                case 5:                                                 // pc+=N
-                    if (arg1 > 0) {
-                        if (processos[processo_em_run]->pcb->pc + arg1 <= processos[processo_em_run]->maxPc)
-                            processos[processo_em_run]->pcb->pc += arg1;
+	                case 5:                                                 // pc+=N
+	                    if (arg1 > 0) {
+	                        if (processos[processo_em_run]->pcb->pc + arg1 <= processos[processo_em_run]->maxPc)
+	                            processos[processo_em_run]->pcb->pc += arg1;
 
-                        else {
-                            violacaoMemoria(&processo_em_run, &processo_em_exit, block, processos);
-                        }
+	                        else {
+	                            violacaoMemoria(&processo_em_run, &processo_em_exit, block, processos);
+	                        }
 
-                    } else if(arg1 == 0) {
-                        processos[processo_em_run]->pcb->pc++;
-                    }                    
-                    break;
+	                    } else if(arg1 == 0) {
+	                        processos[processo_em_run]->pcb->pc++;
+	                    }                    
+	                    break;
 
-                case 6:                                                 // if x=0, pc+=N else pc++
-                    if (arg1 == 0) {
-                        if (processos[processo_em_run]->pcb->pc += arg2 <= processos[processo_em_run]->maxPc)
-                            processos[processo_em_run]->pcb->pc += arg2;
+	                case 6:                                                 // if x=0, pc+=N else pc++
+	                    if (memoria[pmemoria] == 0) {
+	                        if (processos[processo_em_run]->pcb->pc += arg2 <= processos[processo_em_run]->maxPc)
+	                            processos[processo_em_run]->pcb->pc += arg2;
 
-                        else {
-                            violacaoMemoria(&processo_em_run, &processo_em_exit, block, processos);
-                        }
+	                        else {
+	                            violacaoMemoria(&processo_em_run, &processo_em_exit, block, processos);
+	                        }
 
-                    } else
-                        processos[processo_em_run]->pcb->pc++;
+	                    } else
+	                        processos[processo_em_run]->pcb->pc++;
 
-                    break;
+	                    break;
 
-                case 7:                                                 // fork
-                    processos[processo_em_run]->pcb->pc++;
+	                case 7:                                                 // fork
 
-                    if (!isFull(wait)) {
-                        int posicao = obterPosicao(processos[processo_em_run]);
+	                    posicao = obterPosicao(processos[processo_em_run]);
 
-                        if (posicao != -1) {
+	                    if (!isFull(wait) && posicao != -1) {
                             struct pcb *newPcb = novoPcb(p_id, processos[processo_em_run]->pcb->pc + 1, 1);
                             processos[p_id] = novoProcesso(timer, processos[processo_em_run]->codigo, newPcb,
                                                            processos[processo_em_run]->maxPc * 3);
@@ -562,36 +562,33 @@ int main(void) {
                             enqueue(p_id, wait);
                             printMemoria();
                             p_id++;
+						
+						} else {
+	                        falhaFork = 1;
+	                        memoria[processos[processo_em_run]->posicaoInicial + arg1 - 1] = -1;
+	                    }
 
-                        } else {
-                            falhaFork = 1;
-                            memoria[processos[processo_em_run]->posicaoInicial + arg1 - 1] = -1;
-                        }
+	                    processos[processo_em_run]->pcb->pc++;
+	                    //debugPrint(p_id, processos);
+	                    break;
 
-                    } else {
-                        falhaFork = 1;
-                        memoria[processos[processo_em_run]->posicaoInicial + arg1 - 1] = -1;
-                    }
-                    //debugPrint(p_id, processos);
-                    break;
+	                case 8:                                                 // guardar no disco
+	                    runParaBlock(&processo_em_run, block, processos);
+	                    break;
 
-                case 8:                                                 // guardar no disco
-                    runParaBlock(&processo_em_run, block, processos);
-                    break;
+	                case 9:                                                 // ler do disco
+	                    runParaBlock(&processo_em_run, block, processos);
+	                    break;
 
-                case 9:                                                 // ler do disco
-                    runParaBlock(&processo_em_run, block, processos);
-                    break;
+	                case 10:                                                // imprimir variavel
+	                    algoParaImprimir = memoria[pmemoria];
+	                    processos[processo_em_run]->pcb->pc++;
+	                    break;
 
-                case 10:                                                // imprimir variavel
-                    algoParaImprimir = memoria[pInicial + arg1];
-                    processos[processo_em_run]->pcb->pc++;
-                    break;
-
-                default:
-                    runParaExit(&processo_em_run, &processo_em_exit, block, processos);
-                    break;
-            }
+	                default:
+	                    runParaExit(&processo_em_run, &processo_em_exit, block, processos);
+	                    break;
+	            }
             }
 
             
