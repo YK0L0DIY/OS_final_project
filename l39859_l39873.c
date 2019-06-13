@@ -7,7 +7,7 @@
 #define N_MAXIMO_DE_PROCESSOS 30
 #define MAX_MEMORIA 300
 #define QUANTUM 4
-#define FIT 0               // 1 -> bestfit | 0 -> nexfit
+#define FIT 1               // 1 -> bestfit | 0 -> nexfit
 
 int disk;
 int memoria[MAX_MEMORIA];
@@ -558,7 +558,7 @@ int main(void) {
 
                             memoria[processos[p_id]->posicaoInicial + arg1 - 1] = 0;
                             memoria[processos[processo_em_run]->posicaoInicial + arg1 -
-                                    1] = processos[processo_em_run]->pcb->id;
+                                    1] = p_id+1;
                             enqueue(p_id, wait);
                             printMemoria();
                             p_id++;

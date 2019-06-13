@@ -6,5 +6,18 @@ T:   4 | RUN   | WAIT  |
 T:   5 | WAIT  | RUN   | 
 T:   6 | WAIT  | RUN   | 
 T:   7 | RUN   | EXIT  | 
-T:   8 | EXIT  |       | 
-T:   9 |       |       | 
+T:   8 | RUN   |       |   2
+T:   9 | RUN   |       | 
+T:  10 | RUN   |       | 
+T:  11 | RUN   |       | 
+T:  12 | RUN   |       | WAIT  | 
+T:  13 | RUN   |       | WAIT  | 
+T:  14 | RUN   |       | WAIT  |   3
+T:  15 | WAIT  |       | RUN   | 
+T:  16 | WAIT  |       | RUN   | 
+T:  17 | RUN   |       | EXIT  | 
+T:  18 | RUN   |       |       | 
+T:  19 | RUN   |       |       | 
+MEMORY ACCESS VIOLATION
+T:  20 | EXIT  |       |       | 
+T:  21 |       |       |       | 
